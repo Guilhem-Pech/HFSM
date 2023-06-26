@@ -26,16 +26,17 @@ Here's an example:
 
 ```csharp
 // Define your state and event enums
-public enum MyState { Idle, Walk, Run }
+public enum MyState { Root, Idle, Walk, Run }
 public enum MyEvent { StartWalking, StartRunning, Stop }
 
 // Create a new HFSMBuilder instance
 var builder = new HFSMBuilder<MyState, MyEvent>();
 
 // Add states to the builder
-builder.AddState(MyState.Idle);
-builder.AddState(MyState.Walk);
-builder.AddState(MyState.Run);
+builder.AddState(MyState.Movement);
+builder.AddState(MyState.Idle, MyState.Movement);
+builder.AddState(MyState.Walk, MyState.Movement);
+builder.AddState(MyState.Run, MyState.Movement);
 
 // Define transitions between states
 builder.AddTransition(MyState.Idle, MyState.Walk, MyEvent.StartWalking);
