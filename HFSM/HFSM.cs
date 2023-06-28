@@ -3,12 +3,13 @@
 namespace HFSM;
 
 public interface IState {}
-
-public class Transition<TEvent> where TEvent: Enum
+public class Transition<TEvent> where TEvent: struct, Enum
 {
     private IState m_to;
     private Func<bool> m_guard = () => true;
-    private Optionnal<TEvent> m_event = new();
+    private TEvent? m_event = null;
+
+  
 
     public Transition(IState _to)
     {
@@ -16,27 +17,28 @@ public class Transition<TEvent> where TEvent: Enum
     }
     public Transition(IState _to, TEvent _event) : this(_to)
     {
-        m_event = new(_event);
+        m_event = _event;
     }
     public Transition(IState _to, Func<bool> _guard) : this(_to)
     {
         m_guard = _guard;
     }
-    public Transition(IState _to, TEvent? _event, Func<bool> _guard) : this(_to, _event)
+    public Transition(IState _to, TEvent? _event, Func<bool> _guard) : this(_to)
     {
         m_guard = _guard;
+        m_event = _event;
     }
 
     public bool MatchConditions(TEvent? _fsmEvent)
     {
-        return m_guard() && (!m_event.HasValue() || Equals(m_event.Value(), _fsmEvent));
+        return m_guard() && m_event.Equals(_fsmEvent);
     }
     public IState Destination()
     {
         return m_to;
     }
 }
-public class State<TName, TEvent> : IState where TEvent: Enum where TName: Enum
+public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
 {
     private static Action? _noActivity = () => { };
     
@@ -115,7 +117,7 @@ public class State<TName, TEvent> : IState where TEvent: Enum where TName: Enum
     
 }
 
-public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
+public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName : Enum
 {
     private Dictionary<TName, State<TName, TEvent>> m_states = new();
     private List<TransitionInfo> m_transitionInfos = new();
@@ -123,7 +125,7 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
 
     private class TransitionInfo
     {
-        private Optionnal<TEvent> m_trigger = new();
+        private TEvent? m_trigger = null;
 
         public TName From { get; set; }
 
@@ -131,7 +133,7 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
 
         public Func<bool>? Guard { get; set; }
 
-        public Optionnal<TEvent> Trigger
+        public TEvent? Trigger
         {
             get => m_trigger;
             set => m_trigger = value ?? throw new ArgumentNullException(nameof(value));
@@ -155,14 +157,14 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
             From = _from;
             To = _to;
             Guard = _guard;
-            m_trigger = new Optionnal<TEvent>(_event);
+            m_trigger = _event;
         }
         
         public TransitionInfo(TName _from, TName _to, TEvent _event)
         {
             From = _from;
             To = _to;
-            m_trigger = new Optionnal<TEvent>(_event);
+            m_trigger = _event;
         }
     }
     
@@ -214,10 +216,6 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
             {
                 initial = state;
             }
-            else
-            {
-                Debug.Assert(false, $"Multiple root state detected! ({name} and {initial.Name}) this is not supported");
-            }
         }
         
         foreach (var transitionInfo in m_transitionInfos)
@@ -225,13 +223,13 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
             State<TName, TEvent> from = m_states[transitionInfo.From];
             State<TName, TEvent> to = m_states[transitionInfo.To];
             
-            if (transitionInfo.Trigger.HasValue() && transitionInfo.Guard != null)
+            if (transitionInfo is { Trigger: not null, Guard: not null })
             {
-                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value(), transitionInfo.Guard));
+                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value, transitionInfo.Guard));
             }
-            else if(transitionInfo.Trigger.HasValue())
+            else if(transitionInfo.Trigger.HasValue)
             {
-                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value()));
+                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value));
             }
             else if(transitionInfo.Guard != null)
             {
@@ -246,12 +244,12 @@ public class HFSMBuilder<TName, TEvent> where TEvent : Enum where TName : Enum
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 }
-public class HFSM<TName, TEvent> where TEvent: Enum where TName: Enum
+public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
 {
     private State<TName, TEvent> m_initialState;
     private State<TName, TEvent>? m_currentState;
 
-    private Queue<TEvent> m_eventToTreat = new();
+    private Queue<TEvent?> m_eventToTreat = new();
     
     public HFSM(State<TName, TEvent> _initial)
     {
@@ -311,6 +309,11 @@ public class HFSM<TName, TEvent> where TEvent: Enum where TName: Enum
             state.OnUpdate();
         }
     }
+    
+    public void SendEvent(TEvent _trigger)
+    {
+        m_eventToTreat.Enqueue(_trigger);
+    }
 
     private void ChangeActiveState(State<TName, TEvent>? _newState)
     {
@@ -338,11 +341,8 @@ public class HFSM<TName, TEvent> where TEvent: Enum where TName: Enum
         ChangeActiveState(null);
     }
     
-    
     ~HFSM()
     {
         Stop();
     }
-
-  
 }
