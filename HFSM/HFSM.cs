@@ -1,32 +1,24 @@
-﻿using System.Diagnostics;
+﻿using System.Text;
 
 namespace HFSM;
 
 public interface IState {}
 public class Transition<TEvent> where TEvent: struct, Enum
 {
-    private IState m_to;
-    private Func<bool> m_guard = () => true;
-    private TEvent? m_event = null;
-
-  
-
+    private readonly IState m_to;
+    private readonly Func<bool> m_guard = () => true;
+    private readonly TEvent? m_event = null;
+	
     public Transition(IState _to)
     {
-        m_to = _to;
+        m_to = _to ?? throw new ArgumentNullException(nameof(_to));;
     }
-    public Transition(IState _to, TEvent _event) : this(_to)
+    
+    public Transition(IState _to, TEvent? _event = null, Func<bool>? _guard = null) : this(_to)
     {
-        m_event = _event;
-    }
-    public Transition(IState _to, Func<bool> _guard) : this(_to)
-    {
-        m_guard = _guard;
-    }
-    public Transition(IState _to, TEvent? _event, Func<bool> _guard) : this(_to)
-    {
-        m_guard = _guard;
-        m_event = _event;
+	    m_to = _to ?? throw new ArgumentNullException(nameof(_to));
+	    m_guard = _guard ?? m_guard;
+	    m_event = _event;
     }
 
     public bool MatchConditions(TEvent? _fsmEvent)
@@ -37,42 +29,54 @@ public class Transition<TEvent> where TEvent: struct, Enum
     {
         return m_to;
     }
+    public override string ToString()
+    {
+	    StringBuilder builder = new StringBuilder();
+
+	    builder.Append( $"To: {m_to} " );
+	    if ( m_event.HasValue )
+	    {
+		    builder.Append( $"Event: {m_event} " );
+	    }
+	    builder.Append( $"Guard Result: {m_guard()} " ); // Don't really know yet how we can have a more meaningful debug info about the guard
+	    return builder.ToString();
+    }
 }
 public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
 {
-    private static Action? _noActivity = () => { };
-    
+    private static readonly Action? NoActivity = () => { };
     public State(TName _name)
     {
-        m_name = _name;
+        Name = _name;
     }
     
     public State(TName _name, State<TName, TEvent>? _root = null, Action? _onEnterAction = null, Action? _onUpdateAction = null,
-        Action? _onExitAction = null)
-        : this(_name)
+	    Action? _onExitAction = null)
+	    : this(_name)
     {
-        m_parentState = _root;
-        _root?.AddChild(this);
-        
-        if (_onEnterAction != null) m_onEnterAction = _onEnterAction;
-        if (_onUpdateAction != null) m_onUpdateAction = _onUpdateAction;
-        if (_onExitAction != null) m_onExitAction = _onExitAction;
+	    if (_onEnterAction != null) m_onEnterAction = _onEnterAction;
+	    if (_onUpdateAction != null) m_onUpdateAction = _onUpdateAction;
+	    if (_onExitAction != null) m_onExitAction = _onExitAction;
+	    
+	    m_parentState = _root;
+	    _root?.AddChild(this);
     }
-    
+
     public State(TName _name, Action? _onEnterAction = null, Action? _onUpdateAction = null,
-        Action? _onExitAction = null)
-        : this(_name)
+	    Action? _onExitAction = null)
+	    : this(_name)
     {
-        if (_onEnterAction != null) m_onEnterAction = _onEnterAction;
-        if (_onUpdateAction != null) m_onUpdateAction = _onUpdateAction;
-        if (_onExitAction != null) m_onExitAction = _onExitAction;
+	    if (_onEnterAction != null) m_onEnterAction = _onEnterAction;
+	    if (_onUpdateAction != null) m_onUpdateAction = _onUpdateAction;
+	    if (_onExitAction != null) m_onExitAction = _onExitAction;
     }
+	
 
-    private TName m_name;
+    public TName Name { get; private set; }
 
-    private Action? m_onEnterAction = _noActivity;
-    private Action? m_onUpdateAction = _noActivity;
-    private Action? m_onExitAction = _noActivity;
+    private readonly Action? m_onEnterAction = NoActivity;
+    private readonly Action? m_onUpdateAction = NoActivity;
+    private readonly Action? m_onExitAction = NoActivity;
 
     private State<TName, TEvent>? m_parentState = null;
     private List<State<TName, TEvent>> m_children = new();
@@ -82,12 +86,16 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     {
         m_transitions.Add(_transition);
     }
-    public State<TName, TEvent>? CheckTransitions(TEvent? _fsmEvent)
+    public State<TName, TEvent>? CheckTransitions(TEvent? _fsmEvent, out Transition<TEvent>? _matchedTransition )
     {
+	    _matchedTransition = null;
         foreach (Transition<TEvent> transition in m_transitions)
         {
-            if (transition.MatchConditions(_fsmEvent))
-                return transition.Destination() as State<TName, TEvent>;
+	        if ( transition.MatchConditions( _fsmEvent ) )
+	        {
+		        _matchedTransition = transition;
+		        return transition.Destination() as State<TName, TEvent>;
+	        }
         }
         return null;
     }
@@ -109,97 +117,82 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
         return m_parentState;
     }
 
-    public TName Name { get => m_name; set => m_name = value; }
     public void OnEnter() { m_onEnterAction?.Invoke(); }
     public void OnUpdate() { m_onUpdateAction?.Invoke(); }
     public void OnExit() { m_onExitAction?.Invoke(); }
 
-    
+    public override string ToString()
+    {
+	    return $"[{Name}]";
+    }
+
+    public IList<Transition<TEvent>> GetTransitions()
+    {
+        return m_transitions;
+    }
 }
 
 public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName : Enum
 {
-    private Dictionary<TName, State<TName, TEvent>> m_states = new();
-    private List<TransitionInfo> m_transitionInfos = new();
-    private Dictionary<TName, TName> m_stateParents = new();
+    private readonly Dictionary<TName, State<TName, TEvent>> m_states = new();
+    private readonly List<TransitionInfo> m_transitionInfos = new();
+    private readonly Dictionary<TName, TName> m_stateParents = new();
 
     private class TransitionInfo
     {
-        private TEvent? m_trigger = null;
+        public TName From { get; }
 
-        public TName From { get; set; }
+        public TName To { get; }
 
-        public TName To { get; set; }
+        public Func<bool>? Guard { get; }
 
-        public Func<bool>? Guard { get; set; }
-
-        public TEvent? Trigger
-        {
-            get => m_trigger;
-            set => m_trigger = value ?? throw new ArgumentNullException(nameof(value));
-        }
-        
-        public TransitionInfo(TName _from, TName _to)
-        {
-            From = _from;
-            To = _to;
-        }
-
-        public TransitionInfo(TName _from, TName _to, Func<bool>? _guard)
+        public TEvent? Trigger { get; } = null;
+		
+        public TransitionInfo(TName _from, TName _to, Func<bool>? _guard = null, TEvent? _event = null)
         {
             From = _from;
             To = _to;
             Guard = _guard;
-        }
-        
-        public TransitionInfo(TName _from, TName _to, Func<bool>? _guard, TEvent _event)
-        {
-            From = _from;
-            To = _to;
-            Guard = _guard;
-            m_trigger = _event;
+            Trigger = _event;
         }
         
         public TransitionInfo(TName _from, TName _to, TEvent _event)
         {
             From = _from;
             To = _to;
-            m_trigger = _event;
+            Trigger = _event;
         }
     }
     
-    public void AddState(TName _name, Action? _onEnterAction = null, Action? _onUpdateAction = null, Action? _onExitAction = null)
+    public HFSMBuilder<TName, TEvent> AddState(TName _name, Action? _onEnterAction = null, Action? _onUpdateAction = null, Action? _onExitAction = null)
     {
         m_stateParents.Add(_name, _name);
         m_states.Add(_name, new State<TName, TEvent>(_name, _onEnterAction, _onUpdateAction, _onExitAction));
+        return this;
     }
     
-    public void AddState(TName _name, TName _parentName, Action? _onEnterAction = null, Action? _onUpdateAction = null, Action? _onExitAction = null)
+    public HFSMBuilder<TName, TEvent> AddState(TName _name, TName _parentName, Action? _onEnterAction = null, Action? _onUpdateAction = null, Action? _onExitAction = null)
     {
-        Debug.Assert(!m_states.ContainsKey(_name), $"State already defined {_name}");
+        if ( m_states.ContainsKey( _name ) )
+        {
+	        throw new ArgumentException( $"State already defined {_name}" );
+        }
         
         m_stateParents.Add(_name, _parentName);
         m_states.Add(_name, new State<TName, TEvent>(_name, _onEnterAction, _onUpdateAction, _onExitAction));
+        return this;
     }
     
-    public void AddTransition(TName _from, TName _to)
+    public HFSMBuilder<TName, TEvent> AddTransition(TName _from, TName _to, TEvent? _event = null)
     {
-        m_transitionInfos.Add(new TransitionInfo(_from, _to));
+        m_transitionInfos.Add(new TransitionInfo(_from, _to,null, _event));
+        return this;
     }
-    public void AddTransition(TName _from, TName _to, TEvent _event)
-    {
-        m_transitionInfos.Add(new TransitionInfo(_from, _to, _event));
-    }
-    
-    public void AddTransition(TName _from, TName _to, Func<bool> _guard)
-    {
-        m_transitionInfos.Add(new TransitionInfo(_from, _to, _guard));
-    }
-    
-    public void AddTransition(TName _from, TName _to, Func<bool> _guard, TEvent _event)
+	
+    public HFSMBuilder<TName, TEvent> AddTransition(TName _from, TName _to, Func<bool> _guard, TEvent? _event = null)
     {
         m_transitionInfos.Add(new TransitionInfo(_from, _to, _guard, _event));
-
+        return this;
     }
 
     public HFSM<TName, TEvent> Build()
@@ -220,37 +213,60 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         
         foreach (var transitionInfo in m_transitionInfos)
         {
-            State<TName, TEvent> from = m_states[transitionInfo.From];
-            State<TName, TEvent> to = m_states[transitionInfo.To];
-            
-            if (transitionInfo is { Trigger: not null, Guard: not null })
-            {
-                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value, transitionInfo.Guard));
-            }
-            else if(transitionInfo.Trigger.HasValue)
-            {
-                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger.Value));
-            }
-            else if(transitionInfo.Guard != null)
-            {
-                from.AddTransition(new Transition<TEvent>(to, transitionInfo.Guard));
-            }
-            else
-            {
-                from.AddTransition(new Transition<TEvent>(to));
-            }
-        }
+            m_states.TryGetValue( transitionInfo.From, out State<TName, TEvent>? from );
+            m_states.TryGetValue( transitionInfo.To, out State<TName, TEvent>? to );
 
+            if ( from == null )
+            {
+                Console.WriteLine( $"Cannot add transition {transitionInfo.From} => {transitionInfo.To} - {transitionInfo.From} state is not defined" );
+	            continue;
+            }
+            
+            if ( to == null )
+            {
+                Console.WriteLine( $"Cannot add transition {transitionInfo.From} => {transitionInfo.To} - {transitionInfo.To} state is not defined" );
+	            continue;
+            }
+            
+            from.AddTransition(new Transition<TEvent>(to, transitionInfo.Trigger, transitionInfo.Guard));
+        }
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 }
-public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
+public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum 
 {
-    private State<TName, TEvent> m_initialState;
+    private readonly State<TName, TEvent> m_initialState;
     private State<TName, TEvent>? m_currentState;
 
-    private Queue<TEvent?> m_eventToTreat = new();
+    private readonly Queue<TEvent?> m_eventToTreat = new();
     
+    public bool EnableDebugLog { set; get; } = false;
+    
+    private Transition<TEvent>? m_lastTransition;
+
+    private void LogTransition(State<TName, TEvent>? _oldState, State<TName, TEvent>? _newState)
+    {
+	    if (EnableDebugLog)
+	    {
+		    Console.WriteLine($"[HFSM] Transition: {_oldState} -> {_newState}, Reason: {m_lastTransition}");
+	    }
+    }
+    
+    public string GetDebugCurrentStateName()
+    {
+	    StringBuilder stateNamesBuilder = new StringBuilder();
+
+	    foreach (var state in GetActiveStatesHierarchy())
+	    {
+		    stateNamesBuilder.Append('.');
+		    stateNamesBuilder.Append(state.Name);
+	    }
+ 
+	    string names = stateNamesBuilder.ToString();
+
+	    return names.StartsWith(".") ? names.TrimStart('.') : names;
+    }
+
     public HFSM(State<TName, TEvent> _initial)
     {
         m_initialState = _initial;
@@ -300,10 +316,10 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         
         foreach (State<TName, TEvent> state in GetActiveStatesHierarchy())
         {
-            State<TName, TEvent>? destinationState = state.CheckTransitions(receivedEvent);
+            State<TName, TEvent>? destinationState = state.CheckTransitions(receivedEvent, out m_lastTransition);
             if (destinationState != null)
             {
-                ChangeActiveState(destinationState);
+	            ChangeActiveState(destinationState);
                 break;
             }
             state.OnUpdate();
@@ -328,6 +344,7 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
             exitingStates[index].OnExit();
         }
         
+        LogTransition( m_currentState, nextState );
         m_currentState = nextState;
         
         List<State<TName, TEvent>> enteringStates = futureStatesHierarchy.Except(activeStatesHierarchy).ToList();
@@ -338,11 +355,18 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     }
     public void Stop()
     {
+	    m_lastTransition = null;
         ChangeActiveState(null);
     }
     
     ~HFSM()
     {
-        Stop();
+	    if(m_currentState != null)
+			Stop();
+    }
+
+    public State<TName, TEvent> GetRootState()
+    {
+        return m_initialState;
     }
 }
