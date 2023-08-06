@@ -8,7 +8,7 @@ myFsm.AddState(States.root);
     {
         myFsm.AddState(States.c, States.a, () => Console.WriteLine("OnEnter c"));
         {
-            myFsm.AddTransition(States.b, States.a, Events.Trigger);
+    myFsm.AddTransition(States.b, States.a, Events.Trigger, () => Console.WriteLine("Transition from b to a with Trigger event"));
         }
         myFsm.AddTransition(States.a, States.b, () => false);
     }
