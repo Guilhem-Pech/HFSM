@@ -376,6 +376,12 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     // New method to generate a graph representation of the current state machine
     private void UpdateGraphRepresentation()
     {
-        // Code to generate the graph representation goes here
+        // Traverse the state machine
+        foreach (var state in GetActiveStatesHierarchy())
+        {
+            // Generate a graph representation using the graph visualization library
+            // The graph should accurately reflect the current state of the state machine
+            // Code to generate the graph representation goes here
+        }
     }
 }
