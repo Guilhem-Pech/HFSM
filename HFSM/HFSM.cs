@@ -239,44 +239,30 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         if (m_states.Count == 0)
         {
             return false;
-        private bool GenerateDotRepresentation(string fileName)
-        {
-        // Check if the state machine is empty
-        if (m_states.Count == 0)
-        {
-        return false;
         }
-        
+
         // Initialize a new StringBuilder
         StringBuilder dotBuilder = new StringBuilder();
-        
+
         // Start the digraph
         dotBuilder.AppendLine("digraph HFSM {");
-        
+
         // Traverse the state machine and generate the DOT representation
         foreach (var state in m_states.Values)
         {
-        foreach (var transition in state.GetTransitions())
-        {
-        dotBuilder.AppendLine($"    {state.Name} -> {transition.Destination().ToString()};");
+            foreach (var transition in state.GetTransitions())
+            {
+                dotBuilder.AppendLine($"    {state.Name} -> {transition.Destination().ToString()};");
+            }
         }
-        }
-        
+
         // End the digraph
         dotBuilder.AppendLine("}");
-        
+
         // Write the DOT representation to a file
         try
         {
-        File.WriteAllText(fileName, dotBuilder.ToString());
-        }
-        catch (IOException ex)
-        {
-        Console.WriteLine($"Failed to write DOT representation to file: {ex.Message}");
-        return false;
-        }
-        
-        return true;
+            File.WriteAllText(fileName, dotBuilder.ToString());
         }
         catch (IOException ex)
         {
