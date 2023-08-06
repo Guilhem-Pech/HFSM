@@ -31,19 +31,16 @@ public class Transition<TEvent> where TEvent: struct, Enum
     }
     public override string ToString()
     {
-	    StringBuilder builder = new StringBuilder();
-
-	    builder.Append( $"To: {m_to} " );
-	    if ( m_event.HasValue )
-	    {
-		    builder.Append( $"Event: {m_event} " );
-	    }
-	    builder.Append( $"Guard Result: {m_guard()} " );
-	    return builder.ToString();
+    StringBuilder builder = new StringBuilder();
+    
+    builder.Append( $"To: {m_to} " );
+    if ( m_event.HasValue )
+    {
+    builder.Append( $"Event: {m_event} " );
     }
-}
-public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
-{
+    builder.Append( $"Guard Result: {m_guard()} " );
+    return builder.ToString();
+    }
     private static readonly Action? NoActivity = () => { };
     public State(TName _name)
     {
