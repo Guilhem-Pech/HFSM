@@ -63,3 +63,26 @@ Contributions to the HFSM library are welcome! To contribute, please follow thes
 4. Create a pull request, providing a detailed description of your changes.
 
 Before submitting your pull request, please make sure to test your changes and provide appropriate unit tests if applicable.
+
+## Graph Visualization
+
+The HFSM library now supports real-time graph visualization of the state machine. This feature allows you to visualize the current state of the state machine and the transitions between states.
+
+To use the graph visualization feature, follow these steps:
+
+1. Build the state machine as usual using the `HFSMBuilder` class.
+2. Call the `UpdateGraphRepresentation` method of the `HFSM` class whenever a state transition occurs. This will update the graph representation to reflect the current state of the state machine.
+
+Here's an example:
+
+```csharp
+// Build the state machine
+var hfsm = builder.Build();
+
+// Start the state machine
+hfsm.Start();
+
+// Update the state machine and the graph representation
+hfsm.Update();
+hfsm.UpdateGraphRepresentation();
+```
