@@ -123,7 +123,7 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
 
     public override string ToString()
     {
-	    return $"[{Name}]";
+	    return $"{Name}";
     }
 
     public IList<Transition<TEvent>> GetTransitions()
@@ -250,6 +250,10 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         // Traverse the state machine and generate the DOT representation
         foreach (var state in m_states.Values)
         {
+            if (state.GetParent() != null)
+            {
+                dotBuilder.AppendLine($"    {state.GetParent().Name} -> {state.Name};");
+            }
             foreach (var transition in state.GetTransitions())
             {
                 dotBuilder.AppendLine($"    {state.Name} -> {transition.Destination().ToString()};");
