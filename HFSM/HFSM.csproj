@@ -7,4 +7,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <!-- Add a new dependency for the graph visualization library -->
+    <ItemGroup>
+        <PackageReference Include="GraphVisualizationLibrary" Version="1.0.0" />
+    </ItemGroup>
+
 </Project>
