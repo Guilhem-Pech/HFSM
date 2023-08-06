@@ -381,7 +381,12 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         {
             // Generate a graph representation using the graph visualization library
             // The graph should accurately reflect the current state of the state machine
-            // Code to generate the graph representation goes here
+            Graph graph = new Graph();
+            foreach (var transition in state.GetTransitions())
+            {
+                graph.AddEdge(state.ToString(), transition.Destination().ToString());
+            }
+            graph.Visualize();
         }
     }
 }
