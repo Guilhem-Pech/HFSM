@@ -347,6 +347,9 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         LogTransition( m_currentState, nextState );
         m_currentState = nextState;
         
+        // Call the new method to update the graph representation
+        UpdateGraphRepresentation();
+
         List<State<TName, TEvent>> enteringStates = futureStatesHierarchy.Except(activeStatesHierarchy).ToList();
         foreach (State<TName, TEvent> state in enteringStates)
         {
@@ -368,5 +371,11 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     public State<TName, TEvent> GetRootState()
     {
         return m_initialState;
+    }
+
+    // New method to generate a graph representation of the current state machine
+    private void UpdateGraphRepresentation()
+    {
+        // Code to generate the graph representation goes here
     }
 }
