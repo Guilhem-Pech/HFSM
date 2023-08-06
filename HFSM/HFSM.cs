@@ -233,7 +233,7 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 
-    public void GenerateDotRepresentation()
+    public string GenerateDotRepresentation(string fileName)
     {
         // Initialize a new StringBuilder
         StringBuilder dotBuilder = new StringBuilder();
@@ -254,7 +254,16 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         dotBuilder.AppendLine("}");
 
         // Write the DOT representation to a file
-        File.WriteAllText("HFSM.dot", dotBuilder.ToString());
+        try
+        {
+            File.WriteAllText(fileName, dotBuilder.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to write DOT representation to file: {ex.Message}");
+        }
+
+        return dotBuilder.ToString();
     }
 }
 public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum 
