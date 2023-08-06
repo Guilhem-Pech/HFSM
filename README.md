@@ -75,7 +75,7 @@ Here's an example:
 var hfsm = builder.Build();
 
 // Generate the DOT representation
-builder.GenerateDotRepresentation();
+hfsm.GenerateDotRepresentation("HFSM.dot");
 ```
 
-You can then open the "HFSM.dot" file with a Graphviz viewer to visualize the state machine graph.
+You can then open the "HFSM.dot" file with a Graphviz viewer to visualize the state machine graph. Some popular Graphviz viewers include [WebGraphviz](http://www.webgraphviz.com/) and [Graphviz Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview).
