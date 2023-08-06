@@ -34,14 +34,11 @@ public class Transition<TEvent> where TEvent: struct, Enum
 	    StringBuilder builder = new StringBuilder();
 
 	    builder.Append( $"To: {m_to} " );
-	    if ( EnableDebugLog )
+	    if ( m_event.HasValue )
 	    {
-		    if ( m_event.HasValue )
-		    {
-			    builder.Append( $"Event: {m_event} " );
-		    }
-		    builder.Append( $"Guard Result: {m_guard()} " );
+		    builder.Append( $"Event: {m_event} " );
 	    }
+	    builder.Append( $"Guard Result: {m_guard()} " );
 	    return builder.ToString();
     }
 }
@@ -254,6 +251,7 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
 		    m_lastTransition.EnableDebugLog = EnableDebugLog;
 		    Console.WriteLine($"[HFSM] Transition: {_oldState} -> {_newState}, Reason: {m_lastTransition}");
 	    }
+	    // Add thorough testing for the change where the `EnableDebugLog` property of the `m_lastTransition` object is set
     }
     
     public string GetDebugCurrentStateName()
