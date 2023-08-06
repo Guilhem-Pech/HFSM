@@ -34,11 +34,11 @@ public class Transition<TEvent> where TEvent: struct, Enum
     StringBuilder builder = new StringBuilder();
     
     builder.Append( $"To: {m_to} " );
-    if ( m_event.HasValue )
-    {
     builder.Append( $"Event: {m_event} " );
-    }
+    if ( EnableDebugLog )
+    {
     builder.Append( $"Guard Result: {m_guard()} " );
+    }
     return builder.ToString();
     }
     private static readonly Action? NoActivity = () => { };
