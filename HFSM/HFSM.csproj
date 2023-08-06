@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="XState" Version="1.0.0" />
     </ItemGroup>
 
 </Project>
