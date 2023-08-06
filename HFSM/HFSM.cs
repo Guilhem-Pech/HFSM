@@ -242,35 +242,35 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         }
 
         // Initialize a new StringBuilder
-        StringBuilder dotBuilder = new StringBuilder();
+        StringBuilder xstateBuilder = new StringBuilder();
 
-        // Start the digraph
-        dotBuilder.AppendLine("digraph HFSM {");
+        // Start the state machine
+        xstateBuilder.AppendLine("const machine = Machine({");
 
-        // Traverse the state machine and generate the DOT representation
+        // Traverse the state machine and generate the XState representation
         foreach (var state in m_states.Values)
         {
             if (state.GetParent() != null)
             {
-                dotBuilder.AppendLine($"    {state.GetParent().Name} -> {state.Name};");
+                xstateBuilder.AppendLine($"    {state.GetParent().Name}: '{state.Name}',");
             }
             foreach (var transition in state.GetTransitions())
             {
-                dotBuilder.AppendLine($"    {state.Name} -> {transition.Destination().ToString()};");
+                xstateBuilder.AppendLine($"    {state.Name}: '{transition.Destination().ToString()}',");
             }
         }
 
-        // End the digraph
-        dotBuilder.AppendLine("}");
+        // End the state machine
+        xstateBuilder.AppendLine("});");
 
-        // Write the DOT representation to a file
+        // Write the XState representation to a file
         try
         {
-            File.WriteAllText(fileName, dotBuilder.ToString());
+            File.WriteAllText(fileName, xstateBuilder.ToString());
         }
         catch (IOException ex)
         {
-            Console.WriteLine($"Failed to write DOT representation to file: {ex.Message}");
+            Console.WriteLine($"Failed to write XState representation to file: {ex.Message}");
             return false;
         }
 
