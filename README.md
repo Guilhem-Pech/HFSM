@@ -66,7 +66,7 @@ Before submitting your pull request, please make sure to test your changes and p
 
 ## Visualizing the State Machine Graph
 
-To visualize the state machine graph, you can generate a DOT language representation using the `GenerateDotRepresentation` method in the `HFSMBuilder` class. This method should be invoked after the state machine is built. The method generates a DOT file with a specified name that can be visualized using any Graphviz viewer. Note that the file name is passed as a parameter to the `GenerateDotRepresentation()` method and the method does not handle exceptions.
+To visualize the state machine graph, you can generate a DOT language representation using the `GenerateDotRepresentation` method in the `HFSMBuilder` class. This method should be invoked after the state machine is built. The method generates a DOT file with a specified name that can be visualized using any Graphviz viewer. Note that the file name is passed as a parameter to the `GenerateDotRepresentation()` method.
 
 Here's an example:
 
@@ -78,4 +78,4 @@ var hfsm = builder.Build();
 bool success = hfsm.GenerateDotRepresentation("HFSM.dot");
 ```
 
-If the `GenerateDotRepresentation()` method returns `true`, it means the operation was successful and you can then open the "HFSM.dot" file with a Graphviz viewer to visualize the state machine graph. If it returns `false`, it means the operation failed, possibly due to an exception during file writing. Some popular Graphviz viewers include [WebGraphviz](http://www.webgraphviz.com/) and [Graphviz Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview).
+If the `GenerateDotRepresentation()` method returns `true`, it means the operation was successful and you can then open the "HFSM.dot" file with a Graphviz viewer to visualize the state machine graph. If it returns `false`, it means the operation failed. This could be due to an exception during file writing or if the state machine is empty. In case of an exception, check the console for the error message. If the state machine is empty, ensure that you have added states and transitions before invoking the `GenerateDotRepresentation()` method. Some popular Graphviz viewers include [WebGraphviz](http://www.webgraphviz.com/) and [Graphviz Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview).
