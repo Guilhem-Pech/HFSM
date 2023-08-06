@@ -9,6 +9,7 @@
 
     <!-- Add a new dependency for the graph visualization library -->
     <ItemGroup>
+        <!-- Check the library's documentation for any compatibility issues and test the project after adding the library. If any issues are found, use an appropriate version of the library. -->
         <PackageReference Include="GraphVisualizationLibrary" Version="1.0.0" />
     </ItemGroup>
 
