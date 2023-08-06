@@ -232,6 +232,30 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         }
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
+
+    public void GenerateDotRepresentation()
+    {
+        // Initialize a new StringBuilder
+        StringBuilder dotBuilder = new StringBuilder();
+
+        // Start the digraph
+        dotBuilder.AppendLine("digraph HFSM {");
+
+        // Traverse the state machine and generate the DOT representation
+        foreach (var state in m_states.Values)
+        {
+            foreach (var transition in state.GetTransitions())
+            {
+                dotBuilder.AppendLine($"    {state.Name} -> {transition.Destination().ToString()};");
+            }
+        }
+
+        // End the digraph
+        dotBuilder.AppendLine("}");
+
+        // Write the DOT representation to a file
+        File.WriteAllText("HFSM.dot", dotBuilder.ToString());
+    }
 }
 public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum 
 {
