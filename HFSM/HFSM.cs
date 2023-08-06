@@ -376,17 +376,23 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     // New method to generate a graph representation of the current state machine
     private void UpdateGraphRepresentation()
     {
+        // Create a new graph
+        Graph graph = new Graph();
+
         // Traverse the state machine
         foreach (var state in GetActiveStatesHierarchy())
         {
-            // Generate a graph representation using the graph visualization library
-            // The graph should accurately reflect the current state of the state machine
-            Graph graph = new Graph();
+            // For each state, add a node to the graph
+            graph.AddNode(state.ToString());
+
+            // For each transition in the state, add an edge in the graph from the current state to the destination state
             foreach (var transition in state.GetTransitions())
             {
                 graph.AddEdge(state.ToString(), transition.Destination().ToString());
             }
-            graph.Visualize();
         }
+
+        // Visualize the graph
+        graph.Visualize();
     }
 }
