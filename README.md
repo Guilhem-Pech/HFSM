@@ -63,3 +63,19 @@ Contributions to the HFSM library are welcome! To contribute, please follow thes
 4. Create a pull request, providing a detailed description of your changes.
 
 Before submitting your pull request, please make sure to test your changes and provide appropriate unit tests if applicable.
+
+## Visualizing the State Machine Graph
+
+To visualize the state machine graph, you can generate a DOT language representation using the `GenerateDotRepresentation` method in the `HFSMBuilder` class. This method should be invoked after the state machine is built. The method generates a DOT file named "HFSM.dot" that can be visualized using any Graphviz viewer.
+
+Here's an example:
+
+```csharp
+// Build the state machine
+var hfsm = builder.Build();
+
+// Generate the DOT representation
+builder.GenerateDotRepresentation();
+```
+
+You can then open the "HFSM.dot" file with a Graphviz viewer to visualize the state machine graph.
