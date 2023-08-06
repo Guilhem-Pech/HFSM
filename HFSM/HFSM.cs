@@ -233,7 +233,7 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 
-    private bool GenerateDotRepresentation(string fileName)
+    public bool GenerateDotRepresentation(string fileName)
     {
         // Check if the state machine is empty
         if (m_states.Count == 0)
